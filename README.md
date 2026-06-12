@@ -36,24 +36,25 @@ Real-Time Stream Engine: Socket.io (WebSockets)
 
 Directory Layout Tree
 
-frontend/
-├── src/
-│   ├── components/   # Modular UI panels (Profiles, Playgrounds, Canvas Charts)
-│   ├── App.jsx       # Global application framework state & Socket connectors
-│   └── main.jsx
-├── index.html
-└── package.json
-
-
-backend/
-├── src/
-│   ├── config/       # Databases (MongoDB, Redis) & Queue (BullMQ) Workers
-│   ├── controllers/  # Core business logic & Document compilation engines
-│   ├── middleware/   # Custom Rate Limiter & Registration Security Guards
-│   ├── models/       # Mongoose Schemas (Tenant profiles, Usage logs)
-│   ├── routes/       # Centralized Express endpoint router system
-│   └── server.js     # Express App orchestration & Socket.io mount gate
-└── package.json
+rate-limiter-service/ (Master Folder)
+├── backend/
+│   ├── src/
+│   │   ├── config/       # db.js, redis.js, queue.js
+│   │   ├── controllers/  # tenantController.js
+│   │   ├── middleware/   # rateLimiter.js, securityGuard.js
+│   │   ├── models/       # Tenant.js, UsageLog.js
+│   │   ├── routes/       # tenantRoutes.js
+│   │   └── server.js     # Master execution file
+│   ├── .env              # Hidden passwords file 
+│   └── package.json      # Backend dependencies
+│
+└── frontend/
+    ├── src/
+    │   ├── components/   # TenantProfile.jsx, SandboxConsole.jsx, MetricsChart.jsx
+    │   ├── App.jsx
+    │   └── main.jsx
+    ├── index.html
+    └── package.json      # Frontend dependencies
 
 Local Installation & Setup Setup
 Follow these exact execution steps to spin up this project on your local environment:
@@ -89,7 +90,7 @@ cd frontend
 npm install
 npm run dev
 
-Open http://localhost:5173 in your browser web view to begin interacting with the playground!
+Open in your browser web view to begin interacting with the playground!
 
 Simulation Testing Routine
 1.Click Mint New Pass on the dashboard header to generate an active developer token profile directly in your database.
