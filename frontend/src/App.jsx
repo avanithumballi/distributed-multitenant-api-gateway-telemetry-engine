@@ -8,8 +8,8 @@ import TenantProfile from './components/TenantProfile';
 import SandboxConsole from './components/SandboxConsole';
 import MetricsChart from './components/MetricsChart';
 
-const BACKEND_URL = 'http://127.0.0.1:5000/api/v1';
-const SOCKET_URL = 'http://127.0.0.1:5000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000/api/v1';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://127.0.0.1:5000';
 
 export default function App() {
   // Customized with Avani's default placeholder string

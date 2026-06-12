@@ -24,7 +24,8 @@ export default function MetricsChart({ metrics, apiKey }) {
 
   const triggerPdfDownloadDownload = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:5000/api/v1/tenants/analytics/download', {
+     const baseApiUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000/api/v1';
+const response = await axios.get(`${baseApiUrl}/tenants/analytics/download`, {
         headers: { 'x-api-key': apiKey },
         responseType: 'blob',
       });
