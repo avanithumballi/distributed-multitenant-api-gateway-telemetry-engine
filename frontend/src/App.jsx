@@ -38,8 +38,13 @@ export default function App() {
 
   const socketRef = useRef(null);
 
+  // 📡 BULLETPROOF PRODUCTION SOCKET CONNECTIONS HANDSHAKE CALIBRATION
   useEffect(() => {
-    socketRef.current = io(SOCKET_URL);
+    socketRef.current = io(SOCKET_URL, {
+      transports: ['websocket'], // ✅ Bypasses 404-prone HTTP polling completely
+      upgrade: false,            // ✅ Forces WebSocket architecture exclusively from onset
+      withCredentials: true       // ✅ Smoothly carries authentication validation cookies
+    });
 
     socketRef.current.on('activeConnections', (count) => setLiveNodesCount(count));
     socketRef.current.on('gatewayConfigUpdate', (config) => {
@@ -144,10 +149,9 @@ export default function App() {
     }
   };
 
-  // 🎛️ HOT-SWAP RUNTIME CONFIGURATION UPDATE HANDLING (CORRECTED)
   const handleUpdateGatewayConfig = async (e) => {
     e.preventDefault();
-    setConfigLoading(true); // Start spinner
+    setConfigLoading(true); 
     try {
       await axios.post(`${BACKEND_URL}/tenants/config`, {
         freeLimit: inputFreeLimit,
@@ -157,7 +161,7 @@ export default function App() {
     } catch (err) {
       alert('Failed to transmit cluster parameter parameters.');
     } finally {
-      setConfigLoading(false); // ✅ Correct setter function! Shuts the spinner down smoothly.
+      setConfigLoading(false); 
     }
   };
 
@@ -203,7 +207,7 @@ export default function App() {
               className="w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-800 focus:border-cyan-500/60 rounded-xl text-sm font-mono text-cyan-300 outline-none transition-all placeholder:text-slate-600 shadow-inner"
             />
           </div>
-          <div className="w-full md:w-auto flex gap-2 justify-end">
+          <div className="max-w-xs md:w-auto flex gap-2 justify-end">
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} disabled={syncLoading} onClick={() => synchronizeMetricsDashboard()} className="px-6 py-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/50 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-md shadow-black/40">
               <RefreshCw className={`w-4 h-4 text-cyan-400 ${syncLoading ? 'animate-spin' : ''}`} /> Sync Cluster
             </motion.button>
@@ -280,7 +284,6 @@ export default function App() {
               <form onSubmit={handleRegisterTenant} className="space-y-4 pt-1">
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">Account Holder Name</label>
-                  {/* Changed to Avani placeholder example standard */}
                   <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Avani" className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-purple-500 rounded-xl text-sm outline-none font-medium transition-all text-slate-100" />
                 </div>
                 <div>
