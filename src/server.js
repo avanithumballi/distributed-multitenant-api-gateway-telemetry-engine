@@ -14,11 +14,12 @@ const server = http.createServer(app);
 // 1. Fully configured Socket.io server options for production proxies (Render)
 export const io = new Server(server, {
   cors: { 
-    origin: "*", 
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    origin: "https://distributed-multitenant-api-gateway.vercel.app", // Your exact Vercel URL
+    methods: ["GET", "POST"],
     credentials: true
   },
-  transports: ['websocket', 'polling'] // Forces fallback support if WebSockets get blocked
+  allowEIO3: true, // Backwards compatibility for engine.io protocols
+  transports: ['websocket', 'polling'] 
 });
 
 app.use(express.json());
