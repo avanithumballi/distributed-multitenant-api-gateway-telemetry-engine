@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
+import cors from 'cors'; // Added standard cors package for bulletproof fallback
 import { connectDB } from './config/db.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import tenantRoutes from './routes/tenantRoutes.js';
@@ -10,12 +11,19 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// 1. Fully configured Socket.io server options for production proxies (Render)
 export const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST", "PATCH", "PUT", "DELETE"] }
+  cors: { 
+    origin: "*", 
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'] // Forces fallback support if WebSockets get blocked
 });
 
 app.use(express.json());
 
+// Latency & Request Logging Middleware
 app.use((req, res, next) => {
   const startHrTime = process.hrtime();
   res.on('finish', () => {
@@ -26,17 +34,20 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-api-key');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  next();
-});
+// 2. Comprehensive CORS configuration for Express to completely stop 404/Preflight drops
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-api-key', 'Authorization']
+}));
 
+// Connect to Database
 connectDB();
 
+// 3. Mount core tenant routes 
+// This makes endpoints available at: https://<your-url>.onrender.com/api/v1/tenants/<route_inside_tenantRoutes>
 app.use('/api/v1/tenants', tenantRoutes);
+
 app.get('/api/v1/resource', rateLimiter, (req, res) => {
   res.status(200).json({ success: true, message: 'Authorized Gateway Session Cleared! Business metrics synced.' });
 });
@@ -51,6 +62,7 @@ app.post('/api/v1/tenants/config', (req, res) => {
   return res.status(200).json({ success: true, config: gatewayConfig });
 });
 
+// Real-time Telemetry Metrics Stream
 let activeConnectionsCount = 0;
 
 io.on('connection', (socket) => {
