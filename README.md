@@ -69,10 +69,9 @@ Redis running on default port 6379
 
 1. Configure Environmental Parameters
 Create a .env file inside your /backend root directory:
-
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/rate_limiter_db
-REDIS_URL=redis://127.0.0.1:6379
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.yourlink.mongodb.net/your_db
+REDIS_URL=redis://:<password>@your-redis-cloud-endpoint.com:16379
 
 2. Launch the Core Backend Service
 Open a fresh terminal window, move to the backend directory, install packages, and boot the server:
