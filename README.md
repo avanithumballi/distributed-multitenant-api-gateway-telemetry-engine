@@ -35,6 +35,7 @@ Persistent Data Storage: MongoDB Atlas, Mongoose ODM
 Real-Time Stream Engine: Socket.io (WebSockets)
 
 Directory Layout Tree
+
 frontend/
 ├── src/
 │   ├── components/   # Modular UI panels (Profiles, Playgrounds, Canvas Charts)
@@ -42,6 +43,7 @@ frontend/
 │   └── main.jsx
 ├── index.html
 └── package.json
+
 
 backend/
 ├── src/
