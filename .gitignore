@@ -1,8 +1,16 @@
+# Block the main root dependencies (Your Backend packages)
 node_modules/
-backend/node_modules/
+package-lock.json
+
+# Block the frontend subfolder dependencies (Your React packages)
 frontend/node_modules/
+frontend/package-lock.json
+frontend/dist/
+
+# Block your environmental configuration secret keys
 .env
-backend/.env
+frontend/.env
+
+# Block system and text-editor temporary caches
 .DS_Store
 .vscode/
-dist/
