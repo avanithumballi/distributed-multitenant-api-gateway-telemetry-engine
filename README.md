@@ -34,28 +34,6 @@ Persistent Data Storage: MongoDB Atlas, Mongoose ODM
 
 Real-Time Stream Engine: Socket.io (WebSockets)
 
-Directory Layout Tree
-
-rate-limiter-service/ (Master Folder)
-├── backend/
-│   ├── src/
-│   │   ├── config/       # db.js, redis.js, queue.js
-│   │   ├── controllers/  # tenantController.js
-│   │   ├── middleware/   # rateLimiter.js, securityGuard.js
-│   │   ├── models/       # Tenant.js, UsageLog.js
-│   │   ├── routes/       # tenantRoutes.js
-│   │   └── server.js     # Master execution file
-│   ├── .env              # Hidden passwords file 
-│   └── package.json      # Backend dependencies
-│
-└── frontend/
-    ├── src/
-    │   ├── components/   # TenantProfile.jsx, SandboxConsole.jsx, MetricsChart.jsx
-    │   ├── App.jsx
-    │   └── main.jsx
-    ├── index.html
-    └── package.json      # Frontend dependencies
-
 Local Installation & Setup Setup
 Follow these exact execution steps to spin up this project on your local environment:
 
