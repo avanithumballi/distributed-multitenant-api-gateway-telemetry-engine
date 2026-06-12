@@ -34,6 +34,7 @@ export const rateLimiter = async (req, res, next) => {
 
     const finalHttpStatus = currentCount > maxLimit ? 429 : 200;
 
+    // Fast offload asynchronous task streaming straight to BullMQ queue pipelines
     analyticsQueue.add('logRequest', {
       tenantId: tenantIdStr,
       endpoint: req.originalUrl,

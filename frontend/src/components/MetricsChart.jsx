@@ -7,6 +7,8 @@ import axios from 'axios';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000/api/v1';
+
 export default function MetricsChart({ metrics, apiKey }) {
   const total = metrics ? metrics.allowed + metrics.blocked : 0;
 
@@ -24,19 +26,19 @@ export default function MetricsChart({ metrics, apiKey }) {
 
   const triggerPdfDownloadDownload = async () => {
     try {
-     const baseApiUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000/api/v1';
-const response = await axios.get(`${baseApiUrl}/tenants/analytics/download`, {
+      const response = await axios.get(`${BACKEND_URL}/tenants/analytics/download`, {
         headers: { 'x-api-key': apiKey },
         responseType: 'blob',
       });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Avani_Gateway_SLA_Telemetry.pdf`);
+      link.setAttribute('download', `API_SLA_Report_Analytics.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       alert('Failed to assemble server-side streaming PDF file binary datasets.');
     }
@@ -47,7 +49,7 @@ const response = await axios.get(`${baseApiUrl}/tenants/analytics/download`, {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-      className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl shadow-2xl flex flex-col justify-between backdrop-blur-xl"
+      className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl shadow-2xl max-w-sm w-full flex flex-col justify-between backdrop-blur-xl"
     >
       <div>
         <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-4">
@@ -64,7 +66,14 @@ const response = await axios.get(`${baseApiUrl}/tenants/analytics/download`, {
           </div>
         ) : (
           <div className="w-full h-44 relative">
-            <Pie data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } } }} />
+            <Pie 
+              data={chartData} 
+              options={{ 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'monospace', size: 10 } } } } 
+              }} 
+            />
           </div>
         )}
       </div>

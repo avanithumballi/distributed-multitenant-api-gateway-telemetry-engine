@@ -11,7 +11,7 @@ export default function SandboxConsole({ onHitEndpoint, responseLog, requestLoad
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-      className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl shadow-2xl flex flex-col justify-between backdrop-blur-xl relative group"
+      className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl shadow-2xl flex flex-col justify-between backdrop-blur-xl h-full min-h-[440px] relative group"
     >
       <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
       
@@ -29,7 +29,7 @@ export default function SandboxConsole({ onHitEndpoint, responseLog, requestLoad
           onClick={onHitEndpoint}
           className="w-full py-3 px-6 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 hover:via-indigo-900/80 text-cyan-400 font-bold rounded-xl border border-cyan-500/30 text-xs tracking-wider uppercase shadow-xl flex items-center justify-center gap-3 transition-all group-hover:border-cyan-400/50"
         >
-          {requestLoading ? <Cpu className="w-4 h-4 animate-spin text-cyan-400" /> : <Play className="w-3.5 h-3.5 fill-current text-cyan-400 animate-pulse" />}
+          {requestLoading ? <Cpu className="w-4 h-4 animate-spin text-cyan-400" /> : <Play className="w-3.5 h-3.5 fill-current text-cyan-400" />}
           Execute Request Trigger
         </motion.button>
       </div>

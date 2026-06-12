@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, KeyRound, Radio, ShieldAlert, UserPlus, Sparkles, CheckCircle2, Sliders, Globe, Cpu } from 'lucide-react';
+import { RefreshCw, KeyRound, ShieldAlert, UserPlus, Sparkles, CheckCircle2, Sliders, Globe, Cpu } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 import TenantProfile from './components/TenantProfile';
@@ -12,8 +12,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000/a
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://127.0.0.1:5000';
 
 export default function App() {
-  // Customized with Avani's default placeholder string
-  const [apiKey, setApiKey] = useState('sk_pro_712a41f797642f5c56f049cb6eebe92bc'); 
+  const [apiKey, setApiKey] = useState(''); 
   const [tenantData, setTenantData] = useState(null);
   const [responseLog, setResponseLog] = useState('');
   
@@ -38,12 +37,10 @@ export default function App() {
 
   const socketRef = useRef(null);
 
-  // 📡 BULLETPROOF PRODUCTION SOCKET CONNECTIONS HANDSHAKE CALIBRATION
   useEffect(() => {
     socketRef.current = io(SOCKET_URL, {
-      transports: ['websocket'], // ✅ Bypasses 404-prone HTTP polling completely
-      upgrade: false,            // ✅ Forces WebSocket architecture exclusively from onset
-      withCredentials: true       // ✅ Smoothly carries authentication validation cookies
+      transports: ['websocket', 'polling'],
+      withCredentials: true
     });
 
     socketRef.current.on('activeConnections', (count) => setLiveNodesCount(count));
@@ -66,7 +63,14 @@ export default function App() {
 
     socketRef.current.off(channelName);
     socketRef.current.on(channelName, (freshMetrics) => {
-      setTenantData((prev) => ({ ...prev, metrics: freshMetrics }));
+      setTenantData((prev) => ({
+        ...prev,
+        metrics: {
+          allowed: freshMetrics.allowed,
+          blocked: freshMetrics.blocked,
+          total: freshMetrics.total
+        }
+      }));
       showNotificationToast('⚡ WebSocket Frame: Analytics charts updated live!');
     });
 
@@ -86,8 +90,12 @@ export default function App() {
     setSyncLoading(true);
     setGlobalError('');
     try {
-      const res = await axios.get(`${BACKEND_URL}/tenants/analytics`, {
-        headers: { 'x-api-key': activeKey.trim() }
+      const res = await axios.get(`${BACKEND_URL}/tenants/analytics?cb=${Date.now()}`, {
+        headers: { 
+          'x-api-key': activeKey.trim(),
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
       setTenantData(res.data.data);
     } catch (err) {
@@ -99,14 +107,21 @@ export default function App() {
   };
 
   const handleHitEndpoint = async () => {
+    if (!apiKey.trim()) return;
     setRequestLoading(true);
     try {
-      const res = await axios.get(`${BACKEND_URL}/resource`, {
-        headers: { 'x-api-key': apiKey.trim() }
+      // ✅ Aligned target address path to look at /tenants/resource
+      const res = await axios.get(`${BACKEND_URL}/tenants/resource?cb=${Date.now()}`, {
+        headers: { 
+          'x-api-key': apiKey.trim(),
+          'Cache-Control': 'no-cache'
+        }
       });
       setResponseLog(`📡 STATUS: 200 OK \n📦 MSG: ${res.data.message}`);
+      await synchronizeMetricsDashboard();
     } catch (err) {
       setResponseLog(`🚨 STATUS: ${err.response?.status || 'Reject'} \n❌ ERR: ${err.response?.data?.message || 'Blocked.'}`);
+      await synchronizeMetricsDashboard();
     } finally {
       setRequestLoading(false);
     }
@@ -151,7 +166,7 @@ export default function App() {
 
   const handleUpdateGatewayConfig = async (e) => {
     e.preventDefault();
-    setConfigLoading(true); 
+    setConfigLoading(true);
     try {
       await axios.post(`${BACKEND_URL}/tenants/config`, {
         freeLimit: inputFreeLimit,
@@ -159,15 +174,14 @@ export default function App() {
       });
       showNotificationToast('⚙️ System Matrix Flushed! Threshold window changed globally.');
     } catch (err) {
-      alert('Failed to transmit cluster parameter parameters.');
+      alert('Failed to transmit cluster parameters.');
     } finally {
-      setConfigLoading(false); 
+      setConfigLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen text-slate-100 bg-[#040711] relative overflow-x-hidden p-4 sm:p-8 md:p-12 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" />
       <div className="absolute top-[-10%] left-[20%] w-[60vw] h-[40vw] bg-gradient-to-br from-indigo-600/10 to-cyan-500/10 rounded-full blur-[140px] pointer-events-none animate-pulse" />
 
@@ -181,7 +195,6 @@ export default function App() {
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        
         <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-3">
           <div className="inline-flex items-center gap-4 px-4 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-xs font-medium backdrop-blur-md">
             <span className="flex items-center gap-1.5 text-cyan-400">
@@ -207,7 +220,7 @@ export default function App() {
               className="w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-800 focus:border-cyan-500/60 rounded-xl text-sm font-mono text-cyan-300 outline-none transition-all placeholder:text-slate-600 shadow-inner"
             />
           </div>
-          <div className="max-w-xs md:w-auto flex gap-2 justify-end">
+          <div className="w-full md:w-auto flex gap-2 justify-end">
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} disabled={syncLoading} onClick={() => synchronizeMetricsDashboard()} className="px-6 py-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/50 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-md shadow-black/40">
               <RefreshCw className={`w-4 h-4 text-cyan-400 ${syncLoading ? 'animate-spin' : ''}`} /> Sync Cluster
             </motion.button>
@@ -230,7 +243,6 @@ export default function App() {
         <AnimatePresence mode="wait">
           {tenantData ? (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <TenantProfile profile={tenantData.profile} onUpgrade={handlePlanUpgrade} upgradeLoading={upgradeLoading} />
                 <SandboxConsole onHitEndpoint={handleHitEndpoint} responseLog={responseLog} requestLoading={requestLoading} />
@@ -261,7 +273,6 @@ export default function App() {
                   <span className="text-indigo-400 font-semibold">Free Tier: {engineConfig.freeLimit} req/m | Pro Tier: {engineConfig.proLimit} req/m</span>
                 </div>
               </motion.div>
-
             </motion.div>
           ) : (
             !syncLoading && (

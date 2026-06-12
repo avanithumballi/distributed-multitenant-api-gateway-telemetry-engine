@@ -6,7 +6,6 @@ import { io } from '../server.js';
 dotenv.config();
 
 let redisConnection = {};
-
 if (process.env.REDIS_URL) {
   try {
     const url = new URL(process.env.REDIS_URL);
@@ -62,6 +61,7 @@ const analyticsWorker = new Worker(
         if (stat._id === 429) blockedRequests = stat.count;
       });
 
+      // Emits the structured data to the client channel dynamically
       io.emit(`analyticsUpdate:${tenantId}`, {
         allowed: allowedRequests,
         blocked: blockedRequests,

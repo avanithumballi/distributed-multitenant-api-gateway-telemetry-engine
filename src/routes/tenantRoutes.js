@@ -5,9 +5,21 @@ import { Tenant } from '../models/Tenant.js';
 import { UsageLog } from '../models/UsageLog.js';
 import redisClient from '../config/redis.js';
 import { registrationSecurityGuard } from '../middleware/securityGuard.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
+import { io, gatewayConfig } from '../server.js';
 
 const router = express.Router();
 
+// 🟢 Playground Simulator Target Endpoint
+// Maps to: GET /api/v1/tenants/resource
+router.get('/resource', rateLimiter, (req, res) => {
+  res.status(200).json({ 
+    success: true, 
+    message: 'Authorized Gateway Session Cleared! Business metrics synced.' 
+  });
+});
+
+// Maps to: POST /api/v1/tenants/register
 router.post('/register', registrationSecurityGuard, async (req, res) => {
   const { name, email, plan } = req.body;
   if (!name || !email) return res.status(400).json({ success: false, message: 'Missing fields' });
@@ -29,6 +41,7 @@ router.post('/register', registrationSecurityGuard, async (req, res) => {
   }
 });
 
+// Maps to: PATCH /api/v1/tenants/upgrade
 router.patch('/upgrade', async (req, res) => {
   const { apiKey } = req.body;
   if (!apiKey) return res.status(400).json({ success: false, message: 'API Key required' });
@@ -43,14 +56,13 @@ router.patch('/upgrade', async (req, res) => {
     const cacheKey = `cache:tenant:${apiKey}`;
     await redisClient.set(cacheKey, JSON.stringify(tenant), 'EX', 300);
 
-    console.log(`♻️ Cache Synchronized: Pre-emptively mapped updated plan for ${tenant.name}`);
-    
     res.status(200).json({ success: true, message: `Changed plan to ${tenant.plan}`, data: tenant });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
+// Maps to: GET /api/v1/tenants/analytics
 router.get('/analytics', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(400).json({ success: false, message: 'API Key missing' });
@@ -75,7 +87,7 @@ router.get('/analytics', async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        profile: { name: tenant.name, email: tenant.email, plan: tenant.plan, apiKey: tenant.apiKey },
+        profile: { name: tenant.name, email: tenant.email, plan: tenant.plan, apiKey: tenant.apiKey, _id: tenant._id },
         metrics: { allowed: allowedRequests, blocked: blockedRequests, total: allowedRequests + blockedRequests }
       }
     });
@@ -84,6 +96,17 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
+// Maps to: POST /api/v1/tenants/config
+router.post('/config', (req, res) => {
+  const { freeLimit, proLimit } = req.body;
+  if (freeLimit) gatewayConfig.freeLimit = parseInt(freeLimit);
+  if (proLimit) gatewayConfig.proLimit = parseInt(proLimit);
+  
+  io.emit('gatewayConfigUpdate', gatewayConfig);
+  return res.status(200).json({ success: true, config: gatewayConfig });
+});
+
+// Maps to: GET /api/v1/tenants/analytics/download
 router.get('/analytics/download', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(400).json({ success: false, message: 'API Key missing' });
@@ -143,7 +166,6 @@ router.get('/analytics/download', async (req, res) => {
     doc.text(`Document Generation Timestamp Node Clock: ${new Date().toISOString()}`, 50, 465);
 
     doc.end();
-
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -9,8 +9,9 @@ export const connectDB = async () => {
   };
 
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, mongooseOptions);
-    console.log(`📡 MongoDB Atlas Connected Cluster Host: ${conn.connection.host}`);
+    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/rate_limiter_db';
+    const conn = await mongoose.connect(mongoUri, mongooseOptions);
+    console.log(`📡 MongoDB Connected Cluster Host: ${conn.connection.host}`);
   } catch (error) {
     console.error(`🚨 MongoDB Database Connection Failed: ${error.message}`);
     setTimeout(connectDB, 5000);

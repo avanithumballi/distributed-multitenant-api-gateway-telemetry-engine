@@ -3,13 +3,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 const redisClient = createClient({
-  url: process.env.REDIS_URL
+  url: redisUrl
 });
 
-redisClient.on('connect', () => console.log('🏎️ Connected to Redis Cloud Cache Thread Engine.'));
-redisClient.on('error', (err) => console.error('🚨 Redis Engine Broker Connection Error:', err));
+redisClient.on('connect', () => console.log('🏎️ Connected to Redis Cache Engine.'));
+redisClient.on('error', (err) => console.error('🚨 Redis Connection Error:', err));
 
 await redisClient.connect();
-
 export default redisClient;
